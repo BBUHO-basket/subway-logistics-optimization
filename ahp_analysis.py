@@ -10,7 +10,7 @@ import numpy as np
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
-data = pd.read_csv(BASE_DIR / "data/raw/AFC_분석.csv")
+data = pd.read_csv(BASE_DIR / "data/raw/AFC_분석.csv").astype(object)
 
 def change_num0(answers) :
     if answers[0:2] == "시장" : num = int(answers[3])
@@ -75,7 +75,23 @@ for i in range(len(data)) :
     row_avg, consistency  = AHP_4(a, b, c, d, e, f)
     list_row_avg.append(row_avg)
     list_consistency.append(consistency)
-    
-    print(consistency)
 
-    
+# 응답자 평균 가중치: [w_MF, w_EF, w_TF, w_SF]
+avg_weights = np.mean(list_row_avg, axis=0)
+print(f"AHP 평균 가중치 - MF: {avg_weights[0]:.3f}, EF: {avg_weights[1]:.3f}, TF: {avg_weights[2]:.3f}, SF: {avg_weights[3]:.3f}")
+
+#%%
+# y값 계산 및 sub_location.csv 저장
+
+loc_path = BASE_DIR / "data/processed/sub_location.csv"
+sub_data = pd.read_csv(loc_path)
+
+sub_data['y'] = (avg_weights[0] * sub_data['MF'] +
+                 avg_weights[1] * sub_data['EF'] +
+                 avg_weights[2] * sub_data['TF'] +
+                 avg_weights[3] * sub_data['SF'])
+
+sub_data.to_csv(loc_path, index=False, encoding='utf-8-sig')
+print("y값 업데이트 완료")
+print(sub_data[['name_subway', 'MF', 'EF', 'TF', 'SF', 'y']].head(10).to_string())
+
